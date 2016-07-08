@@ -1,0 +1,167 @@
+---
+title: "Chapter 2 Notes and Exercises"
+author: "Matthias Grenié"
+date: "8 juillet 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document are notes taken when reading [*Statistical Rethinking* from Richard McElreath](http://xcelab.net/rm/statistical-rethinking/)
+
+## Practice
+
+answer questions
+
+### Easy
+
+#### 2E1
+
+(2) Pr(rain|Monday)
+
+#### 2E2
+
+(3) The probability that it is Monday, given that it is raining
+
+#### 2E3
+
+Probability that it is Monday given that it is raining:
+
+(1) Pr(Monday|rain) and (4) (from Bayes' theorem)
+\begin{equation}
+  \frac{\text{Pr}(\text{rain}|\text{Monday})\text{Pr}(\text{Monday})}{\text{Pr}(\text{rain})}
+\end{equation}
+
+
+### Medium
+
+#### 2M1
+
+```{r gridApprox, fig.width=2}
+globe_water = function(n, number_W, size) {
+  p_grid = seq(0, 1, length.out = n)
+
+  prior = rep(1, n)
+  
+  likelihood = dbinom(number_W, size = size, prob = p_grid)
+  
+  non_std_post = likelihood * prior
+  
+  posterior = non_std_post / sum(non_std_post)
+  
+  cat("Most probable percentage of water is: ", p_grid[which.max(posterior)])
+  
+  plot(p_grid, posterior, type = "b", xlab = "Percentage of water",
+       ylab = "Density")
+}
+
+par(mfrow = c(3, 1), mai = rep(0.3,4))
+
+globe_water(50, 3, 3)
+globe_water(50, 3, 4)
+globe_water(50, 5, 7)
+```
+
+
+
+#### 2M2
+
+Same question but changed prior
+
+```{r 2M2, fig.width=2}
+globe_water2 = function(n, number_W, size) {
+  p_grid = seq(0, 1, length.out = n)
+
+  prior = c(rep(0, n/2), rep(1, n/2))
+  
+  likelihood = dbinom(number_W, size = size, prob = p_grid)
+  
+  non_std_post = likelihood * prior
+  
+  posterior = non_std_post / sum(non_std_post)
+  
+  cat("Most probable percentage of water is: ", p_grid[which.max(posterior)])
+  
+  plot(p_grid, posterior, type = "b", xlab = "Percentage of water",
+       ylab = "Probability Density")
+}
+
+par(mfrow = c(3, 1), mai = rep(0.3,4))
+
+globe_water2(50, 3, 3)
+globe_water2(50, 3, 4)
+globe_water2(50, 5, 7)
+```
+
+
+#### 2M3
+
+From Bayes' Theorem:
+\begin{align}
+  \text{Pr}(\text{Earth}|\text{land}) &=
+    \frac{
+      \text{Pr}(\text{land}|\text{Earth}) \text{Pr}(\text{Earth})
+    }{
+      \text{Pr}(\text{land})
+    }\\
+    &=
+    \frac{0.3 \times 0.5}{\frac{1.3}{2}}\\
+    &= 0.23
+\end{align}
+
+
+#### 2M4
+
+Three cards B/B, B/W, B/B 3 ways of having a black side up (B/B two sides and one side of B/W) then only 2 ways of having the other side black (B1/B2 and B2/B1) so
+\begin{equation}
+P = \frac{2}{3}
+\end{equation}
+
+
+#### 2M5
+
+Same as above but 5 ways of having a black side up and only 4 ways then to have the other side black so:
+\begin{equation}
+P = \frac{4}{5}
+\end{equation}
+
+
+
+#### 2M6
+
+As above but this time the deck could be as follow: one B/B card, two B/W cards and three W/W cards. 4 ways of a black side up (the two B/W cards and the two sides of the B/B card) and only then 2 ways of having the other side black
+
+
+
+#### 2M7
+
+By counting everything there is 8 ways to have black side up first then white side up, of which only 6 have first a card with two black sides so $P = 6/8$
+
+
+
+### Hard
+
+#### 2H1
+
+\begin{align}
+  \text{P}(\text{twins}) &= \text{P}(\text{twins}|A)\text{P}(A) + \text{P}(\text{twins}|B)\text{P}(B)\\
+    &= 0.1 \times 0.5 + 0.2 \times 0.5\\
+    &= 0.15
+\end{align}
+
+
+#### 2H2
+
+From Bayes' theorem:
+
+\begin{align}
+  \text{P}(A|\text{twins}) &= 
+    \frac{\text{P}(\text{twins}|A)\text{P}(A)}{\text{P}(\text{twins})}\\
+  &= \frac{0.1 \times 0.5}{0.15}\\
+  &= \frac{1}{3}
+\end{align}
+
+
+#### 2H3
