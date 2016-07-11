@@ -165,3 +165,48 @@ From Bayes' theorem:
 
 
 #### 2H3
+
+From Bayes' theorem:
+
+\begin{align}
+  \text{P}(A|\text{single}, \text{twins}) &= \frac{
+    \text{P}(\text{single}, \text{twins}|A)\text{P}(A)
+  }{
+    \text{P}(\text{single}, \text{twins})
+  }\\
+  &= \frac{
+    \text{P}(\text{single}|A)\text{P}(\text{twins}|A)\text{P}(A)
+  }{
+    \text{P}(\text{single}|A)\text{P}(\text{twins}|A)\text{P}(A) +
+    \text{P}(\text{single}|B)\text{P}(\text{twins}|B)\text{P}(B)
+  }\\
+  &= \frac{
+    0.9 \times 0.1 \times 0.5 
+  }{
+  0.9 \times 0.1 \times 0.5 + 0.8 \times 0.2 \times 0.5
+  }\\
+  &= 0.36
+\end{align}
+
+#### 2H4
+
+From Bayes' theorem: (with idA being the event "panda indetified as species A")
+
+\begin{align}
+  \text{P}(A|idA) &= \frac{
+    \text{P}(idA|A)\text{P}(A)
+  }{
+    \text{P}(idA)
+  }\\
+  &= \frac{
+    \text{P}(idA|A)\text{P}(A)
+  }{
+    \text{P}(idA|A)\text{P}(A) + \text{P}(idA|B)\text{P}(B)
+  }\\
+  &= \frac{
+    0.8 \times 0.5
+  }{
+    0.8 \times 0.5 + 0.35 \times 0.5
+  }\\
+  &= 0.6956522
+\end{align}
