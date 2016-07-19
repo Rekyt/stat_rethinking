@@ -1,0 +1,141 @@
+---
+title: "Chapter 3 Notes and Exercises"
+author: "Matthias Grenié"
+date: "19 juillet 2016"
+output: pdf_document
+---
+
+# Chapter 3
+
+## Notes
+
+How to sample from a posterior distribution?
+
+```{r}
+p_grid = seq(from=0, to=1, length.out=1000)
+prior = rep(1 , 1000)
+likelihood = dbinom(6 , size=9, prob=p_grid)
+posterior = likelihood * prior
+posterior = posterior / sum(posterior)
+
+sampling = sample(p_grid, prob = posterior, size = 1e4, replace = TRUE)
+```
+
+We sample according to the value of the posterior distributions, thus it gives back the posterior distribution:
+
+```{r}
+par(mfrow = c(1, 2))
+
+plot(p_grid, posterior)
+plot(density(sampling))
+```
+
+## Practice
+
+### Easy
+
+```{r ToRun}
+p_grid <- seq(from=0 , to=1, length.out=1000 )
+prior <- rep(1 , 1000)
+likelihood <- dbinom(6 , size=9 , prob=p_grid)
+posterior <- likelihood * prior
+posterior <- posterior / sum(posterior)
+set.seed(100)
+samples <- sample( p_grid , prob=posterior , size=1e4 , replace=TRUE)
+```
+
+
+#### 3E1
+
+```{r 3e1}
+sum(samples < 0.2)/length(samples)
+```
+
+
+#### 3E2
+
+```{r 3e2}
+sum(samples > 0.8)/length(samples)
+```
+
+
+#### 3E3
+
+```{r}
+sum(samples > 0.2 & samples < 0.8)/length(samples)
+```
+
+
+#### 3E4
+
+```{r}
+quantile(samples, probs = c(0.2))
+```
+
+
+#### 3E5
+
+```{r}
+quantile(samples, probs = c(0.8))
+```
+
+#### 3E6
+
+```{r}
+hpdi_66 = rethinking::HPDI(samples, prob = 0.66)
+hpdi_66
+# Verification, it should contain 66% of the values
+sum(samples > min(hpdi_66) & samples < max(hpdi_66))/length(samples)
+```
+
+
+#### 3E7
+
+```{r}
+rethinking::PI(samples, prob = 0.66)
+```
+
+
+
+### Medium
+
+#### 3M1
+
+```{r}
+like_2 <- dbinom(8, size=15, prob=p_grid)
+post_2 <- like_2 * prior
+post_2 <- post_2 / sum(post_2)
+set.seed(100)
+samples_2 <- sample(p_grid, prob=post_2, size=1e4, replace=TRUE)
+```
+
+```{r}
+par(mfrow = c(1, 1))
+plot(p_grid, post_2, type = "l", xlab = "Probability of Water",
+     ylab = "Posterior", main = "Second series 8W in 15 tosses")
+```
+
+
+#### 3M2
+
+```{r}
+rethinking::HPDI(samples_2, 0.9)
+```
+
+
+#### 3M3
+
+```{r}
+prob_8_15 = rbinom(1e4, size = 15, prob = samples_2)
+sum(prob_8_15 == 8)/1e4
+```
+
+
+
+#### 3M4
+
+```{r}
+prob_6_9 = rbinom(1e4, size = 9, prob = samples_2)
+sum(prob_6_9 == 6)/1e4
+```
+
