@@ -1,0 +1,14 @@
+---
+title: "Chapter 5 Notes and Exercises"
+author: "Matthias Grenié"
+date: "9 août 2016"
+output: pdf_document
+---
+
+# Chapter 5
+
+## Notes
+
+
+
+## Practice
