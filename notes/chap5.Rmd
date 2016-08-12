@@ -56,7 +56,7 @@ Now with additional predictor (median marriage age and mediam marriage rate):
 ```{r}
 d$Marriage.s = scale(d$Marriage)
 
-m5.1.2 = map(
+m5.3 = map(
   alist(
     Divorce ~ dnorm(mu, sigma),
     mu <- alpha + beta_a * MedianAgeMarriage.s + beta_r * Marriage.s,
@@ -67,6 +67,36 @@ m5.1.2 = map(
   ),
   data = d
 )
+
+plot(precis(m5.3))
+```
+
+
+### Residual plots
+
+### Counterfactual plot
+
+```{r}
+a.avg = mean(d$MedianAgeMarriage.s)
+r.seq = seq(-3, 3, length.out = 30)
+
+pred.data = data.frame(
+  Marriage.s = r.seq,
+  MedianAgeMarriage.s = a.avg
+)
+
+mu = link(m5.3, data = pred.data)
+mu.mean = apply(mu, 2, mean)
+mu.PI = apply(mu, 2, PI)
+
+r.sim = sim(m5.3, data = pred.data, n = 1e4)
+
+r.PI = apply(r.sim, 2, PI)
+
+plot(Divorce ~ Marriage.s, data = d)
+lines(r.seq, mu.mean)
+shade(mu.PI, r.seq)
+shade(r.PI, r.seq)
 ```
 
 
