@@ -74,11 +74,33 @@ plot(precis(m5.3))
 
 ### Residual plots
 
+Predict one predictor from the other
+
+```{r}
+m5.4 = map(
+  alist(
+    Marriage.s ~ dnorm(mu, sigma),
+    mu <- alpha + beta_a * MedianAgeMarriage.s,
+    alpha ~ dnorm(10, 10),
+    beta_a ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = d
+)
+
+mu <- coef(m5.4)["alpha"] + coef(m5.4)["beta_a"]*d$MedianAgeMarriage.s
+
+m.resid <- d$Marriage.s - mu
+
+plot(m.resid, d$Divorce)
+```
+
+
 ### Counterfactual plot
 
 ```{r}
 a.avg = mean(d$MedianAgeMarriage.s)
-r.seq = seq(-3, 3, length.out = 30)
+r.seq = seq(-3, 3, length.out = 30)  # Create range of data
 
 pred.data = data.frame(
   Marriage.s = r.seq,
@@ -99,5 +121,365 @@ shade(mu.PI, r.seq)
 shade(r.PI, r.seq)
 ```
 
+### Posterior prediction plot
+
+```{r}
+mu = link(m5.3)
+
+mu.mean = apply(mu, 2, mean)
+mu.PI   = apply(mu, 2, PI)
+
+divorce.sim = sim(m5.3, n = 1e4)
+divorce.PI  = apply(divorce.sim, 2, PI)
+
+plot(mu.mean ~ d$Divorce, col = rangi2, ylim = range(mu.PI),
+     xlab = "Observed divorce", ylab = "Predicted divorce")
+abline(a = 0, b = 1, lty = 2)
+for (i in 1:nrow(d)) {
+  lines(rep(d$Divorce[i], 2), c(mu.PI[1, i], mu.PI[2, i]))
+}
+```
+
+## 5.2 Masked Relationship
+
+```{r}
+data(milk)
+d = milk
+str(d)
+```
+
+Bivariate regression between kilocalories and neocortex percent:
+
+### Only Neocortex percent as predictor
+
+```{r}
+# Get non-NA values
+dcc = d[complete.cases(d), ]
+
+m5.5 = map(
+  alist(
+    kcal.per.g ~ dnorm(mu, sigma),
+    mu <- a + bn*neocortex.perc,
+    a ~ dnorm(0, 100),
+    bn ~ dnorm(0, 1),
+    sigma ~ dunif(0, 1)
+  ),
+  data = dcc
+)
+```
+
+```{r}
+np.seq = 0:100
+pred.data = data.frame(neocortex.perc = np.seq)
+
+mu      = link(m5.5, data = pred.data, n = 1e4)
+mu.mean = apply(mu, 2, mean)
+mu.PI   = apply(mu, 2, PI)
+
+
+plot(kcal.per.g ~ neocortex.perc, data = dcc, col = rangi2)
+lines(np.seq, mu.mean)
+lines(np.seq, mu.PI[1,], lty = 2)
+lines(np.seq, mu.PI[2,], lty = 2)
+```
+
+### Only Female Mass as predictor
+
+```{r}
+dcc$log.mass = log(dcc$mass)
+
+m5.6 = map(
+  alist(
+    kcal.per.g ~ dnorm(mu, sigma),
+    mu <- a + bm * log.mass,
+    a ~ dnorm(0, 100),
+    bm ~ dnorm(0, 1),
+    sigma ~ dunif(0, 1)
+  ),
+  data = dcc
+)
+
+precis(m5.6)
+```
+
+```{r}
+log.mass.seq = seq(-3, 5, by = 0.5)
+pred.logmass = data.frame(log.mass = log.mass.seq)
+
+mu.mass.link = link(m5.6, data = pred.logmass, n = 1e4)
+mu.mass.mean = apply(mu.mass.link, 2, mean)
+mu.mass.PI   = apply(mu.mass.link, 2, PI)
+
+plot(kcal.per.g ~ log.mass, data = dcc, col = rangi2)
+lines(log.mass.seq, mu.mass.mean)
+lines(log.mass.seq, mu.mass.PI[1, ], lty = 2)
+lines(log.mass.seq, mu.mass.PI[2, ], lty = 2)
+```
+
+
+### Multiple predictors
+
+
+```{r}
+m5.7 <- map(
+  alist(
+    kcal.per.g ~ dnorm(mu, sigma),
+    mu <- a + bn * neocortex.perc + bm * log.mass,
+    a ~ dnorm(0, 100),
+    bn ~ dnorm(0, 1),
+    bm ~ dnorm(0, 1),
+    sigma ~ dunif(0, 1)
+  ),
+  data = dcc
+)
+
+precis(m5.7)
+```
+
+Counterfactual plot showing the model outcome with average neocortex percentage:
+```{r}
+mean.log.mass = mean(log(dcc$mass))
+np.seq = 0:100
+pred.cortex.data = data.frame(
+  neocortex.perc = np.seq,
+  log.mass = mean.log.mass
+)
+
+mu.cortex = link(m5.7, data = pred.cortex.data, n = 1e4)
+mu.cortex.mean = apply(mu.cortex, 2, mean)
+mu.cortex.PI = apply(mu.cortex, 2, PI)
+
+plot(kcal.per.g ~ neocortex.perc, data = dcc, type = "n")
+lines(np.seq, mu.cortex.mean)
+lines(np.seq, mu.cortex.PI[1,], lty = 2)
+lines(np.seq, mu.cortex.PI[2,], lty = 2)
+```
+
+Counterfactual plot showing model outcome with average log female mass:
+
+```{r}
+mean.neocortex.perc = mean(dcc$neocortex.perc)
+pred.mass.data = data.frame(
+  neocortex.prec = mean.neocortex.perc,
+  log.mass = log.mass.seq
+)
+
+mu.mass = link(m5.7, data = pred.mass.data, n = 1e4)
+mu.mass.mean = apply(mu.mass, 2 , mean)
+mu.mass.PI   = apply(my.mass, 2, PI)
+
+plot(kcal.per.g ~ log.mass, data = dcc, type = "n")
+lines(log.mass.seq, mu.mass.mean)
+lines(log.mass.seq, mu.mass.PI[1, ], lty = 2)
+lines(log.mass.seq, mu.mass.PI[2, ], lty = 2)
+```
+
+
+## 5.3 When adding variables hurts
+
+Simulate heights and leg lengths of 100 individuals.
+
+```{r}
+N = 100
+height = rnorm(N, 10, 2)
+leg_prop = runif(N, 0.4, 0.5)
+leg_left = leg_prop*height + rnorm(N, 0, 0.02)
+leg_right = leg_prop*height + rnorm(N, 0, 0.02)
+
+d.legs = data.frame(height, leg_left, leg_right)
+
+m5.8 = map(
+  alist(
+    height ~ dnorm(mu, sigma),
+    mu <- a + bl * leg_left + br * leg_right,
+    a  ~ dnorm(10, 100),
+    bl ~ dnorm(2, 10),
+    br ~ dnorm(2, 10),
+    sigma ~ dunif(0, 10)
+  ),
+  data = d.legs
+)
+
+precis(m5.8)
+
+plot(precis(m5.8))
+```
+
+```{r}
+# Get a look at posterior distribution
+post = extract.samples(m5.8)
+
+plot(bl ~ br, post, col = col.alpha(rangi2, 0.1), pch = 16)
+```
+
+```{r}
+# The sum of coefficents is what matters here
+sum_blbr = post$bl + post$br
+
+dens(sum_blbr, col = rangi2, lwd = 2, xlab = "bl + br")
+```
+
+Now modeling milk energy in function of fat and lactose percentage:
+```{r}
+data(milk)
+d = milk
+
+m5.10 = map(
+  alist(
+    kcal.per.g ~ dnorm(mu, sigma),
+    mu <- a + bf * perc.fat,
+    a ~ dnorm(0.6, 10),
+    bf ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = d
+)
+
+m5.11 = map(
+  alist(
+    kcal.per.g ~ dnorm(mu, sigma),
+    mu <- a + bl * perc.lactose,
+    a ~ dnorm(0.6, 10),
+    bl ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = d
+)
+
+precis(m5.10, digits = 3)
+precis(m5.11, digits = 3)
+```
+
+Multivariate regression:
+```{r}
+m5.12 = map(
+  alist(
+    kcal.per.g ~ dnorm(mu, sigma),
+    mu <- a + bf * perc.fat + bl * perc.lactose,
+    a ~ dnorm(0.6, 10),
+    bf ~ dnorm(0, 1),
+    bl ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = d
+)
+
+precis(m5.12, digits = 3)
+```
+
+Post-treatment bias, an example from a simulated plant experiment:
+
+```{r}
+N = 100
+
+h0 = rnorm(N, 10, 2)
+
+treatment = rep(0:1, each = N/2)
+fungus = rbinom(N, 1, prob = 0.5 - treatment*0.4)
+h1 = h0 + rnorm(N, 5 - 3 * fungus)
+
+d = data.frame(h0 = h0, h1 = h1, treatment = treatment,
+               fungus = fungus)
+```
+
+
+```{r}
+m5.13 = map(
+  alist(
+    h1 ~ dnorm(mu, sigma),
+    mu <- a + bh*h0 + bt*treatment + bf*fungus,
+    a ~ dnorm(0, 100),
+    c(bh, bt, bf) ~ dnorm(0, 10),
+    sigma ~ dunif(0, 10)
+  ),
+  data = d
+)
+
+precis(m5.13)
+```
+
+## 5.4 Factor variables
+
+```{r}
+data("Howell1")
+d = Howell1
+str(d)
+head(d)
+```
+
+```{r}
+m5.15 = map(
+  alist(
+    height ~ dnorm(mu, sigma),
+    mu <- a + bm*male,
+    a ~ dnorm(178, 100),
+    bm ~ dnorm(0, 10),
+    sigma ~ dunif(0, 50)
+  ),
+  data = d
+)
+
+precis(m5.15)
+```
+
+For binary variables simple create dummy variable to get category. Intercept gives the average of decided category.
+
+With k categories need k - 1 dummy variables.
+Or index variable (one intercept per category):
+
+```{r}
+data(milk)
+d = milk
+
+d$clade_id = coerce_index(d$clade)
+
+m5.16_alt = map(
+  alist(
+    kcal.per.g ~ dnorm(mu, sigma),
+    mu <- a[clade_id],
+    a[clade_id] ~ dnorm(0.6, 10),
+    sigma ~ dunif(0, 10)
+  ),
+  data = d
+)
+
+precis(m5.16_alt, depth = 2)
+```
 
 ## Practice
+
+### Easy
+
+#### 5E1
+
+(2), (3) and (4) are multiple linear regressions.
+
+#### 5E2
+
+\begin{align*}
+  Animal_{diversity} \sim& \text{Normal}(\mu_i, \sigma) \\
+  \mu_i =& \alpha + \beta_A Latitude + \beta_B Plant_{diversity} \\
+  \alpha \sim& \text{Normal}(10, 10) \\
+  \beta_A \sim& \text{Normal}(0, 10) \\
+  \beta_B \sim& \text{Normal}(0, 10) \\
+  \sigma \sim& \text{Uniform}(0, 10)
+\end{align*}
+
+
+#### 5E3
+
+\begin{align*}
+  Time_{to PhD} \sim& \text{Normal}(\mu_i, \sigma) \\
+  \mu_i =& \alpha + \beta_A funding + \beta_B labsize \\
+  \alpha \sim& \text{Normal}(10, 10) \\
+  \beta_f \sim& \text{Normal}(0, 10) \\
+  \beta_l \sim& \text{Normal}(0, 10) \\
+  \sigma \sim& \text{Uniform}(0, 10)
+\end{align*}
+
+with $beta_f$ positive and $beta_l$ too.
+
+
+#### 5E4
+
+All of them except (4)?
