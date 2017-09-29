@@ -483,3 +483,85 @@ with $beta_f$ positive and $beta_l$ too.
 #### 5E4
 
 All of them except (4)?
+
+
+### Hard
+
+```{r load_hard_data}
+data(foxes)
+```
+
+#### 5H1
+
+```{r}
+m5h1_1 = map(
+  alist(
+    weight ~ dnorm(mean = mu, sd = sigma),
+    mu <- a + b * area,
+    c(a, b) ~ dnorm(0, 10),
+    sigma ~ dunif(0, 50)
+  ),
+  data = foxes
+)
+m5h1_2 = map(
+  alist(
+    weight ~ dnorm(mean = mu, sd = sigma),
+    mu <- a + b * groupsize,
+    c(a, b) ~ dnorm(0, 10),
+    sigma ~ dunif(0, 50)
+  ),
+  data = foxes
+)
+
+par(mfrow = c(2, 1))
+# Plot for weight ~ area
+area.seq = seq(1, 5.1, length.out = 30)
+mu_area = link(m5h1_1, data = data.frame(area = area.seq))
+mu_area.PI = apply(mu_area, 2, PI, prob = 0.95)
+
+plot(weight ~ area, data = foxes, col = rangi2)
+abline(m5h1_1)
+shade(mu_area.PI, area.seq)
+
+# Plot for weight ~ groupsize
+groupsize.seq = seq(2, 8, length.out = 30)
+mu_groupsize = link(m5h1_2, data = data.frame(groupsize = groupsize.seq))
+mu_groupsize.PI = apply(mu_groupsize, 2, PI, prob = 0.95)
+
+plot(weight ~ groupsize, data = foxes, col = rangi2)
+abline(m5h1_2)
+shade(mu_groupsize.PI, groupsize.seq)
+```
+
+It seems that groupsize is slightly import for predicting fox body weight
+
+#### 5H2
+
+```{r}
+m5h2 = map(
+  alist(
+    weight ~ dnorm(mean = mu, sd = sigma),
+    mu <- a + b1 * area + b2 * groupsize,
+    c(a, b1, b2) ~ dnorm(0, 10),
+    sigma ~ dunif(0, 50)
+  ),
+  data = foxes
+)
+
+mu_weight_area_cst = link(m5h2, data = data.frame(area = mean(foxes$area),
+                                                  groupsize = groupsize.seq))
+mu_weight_area_cst.PI = apply(mu_weight_area_cst, 2, PI, prob = 0.95)
+mu_weight_area_cst.mean = apply(mu_weight_area_cst, 2, mean)
+
+r_area.sim = sim(m5h2, data = data.frame(area = mean(foxes$area),
+                                                  groupsize = groupsize.seq),
+                 n = 1e4)
+
+r_area.PI = apply(r_area.sim, 2, PI)
+
+plot(weight ~ groupsize, data = foxes, col = rangi2)
+lines(groupsize.seq, mu_weight_area_cst.mean)
+shade(mu_weight_area_cst.PI, groupsize.seq)
+shade(r_area.PI, groupsize.seq)
+```
+
