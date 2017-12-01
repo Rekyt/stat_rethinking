@@ -1,0 +1,174 @@
+---
+title: "Chapter 6 Notes & Exercises"
+author: "Rekyt"
+date: "01/12/2017"
+output: pdf_document
+---
+
+## Exercises
+### Easy
+
+#### 6E1
+Define motivations behind information criteria?
+
+#### 6E2
+
+If the coin is weighted such as it's comes up head 70% of the time we can compute it's entropy using the following formula
+
+\begin{align*}
+  E = p_i \log(p_i) + (1 - p_i)\log(1- p_i)
+\end{align*}
+
+```{r entropy_coin}
+0.7*log(0.7) + 0.3*log(0.3)
+```
+
+
+#### 6E3
+
+Same thing for the dice
+
+```{r}
+0.2*log(0.2) + 2*0.25*log(0.25) + 0.3*log(0.3)
+```
+
+#### 6E4
+
+Again, similarly
+```{r}
+3*(1/3)*log(1/3)
+```
+
+### Medium
+
+#### 6M1
+
+AIC -> flat prior, multivariate gaussian distribution of variables
+DIC -> any prior, multivariate gaussian distribution
+WAIC -> any prior, any distribution
+
+
+#### 6M2
+
+Model *selection* tries to find the "best" model to predict something. Using this approach the user compares the different models and choose based on a given criteria, generally the performance accuracy, a given model. Information about the performance of other models is forgot in this approach.
+
+Model *averaging* states that each model is a little true and weighs the different model *predictions*. Because each model can be true on certain data range, model averaging takes advantage of this to average the predictions of all models in a subset. In this case, there is an aggregation of the different models predictions, so there is no "average model estimates" to guess the effect of a predictor on a variable.
+
+
+
+#### 6M3
+
+If models are fit on different observations and especially on different number of observations their performances can't be compared.
+The more data a model is fit the more precise it can be for example.
+
+
+#### 6M4
+
+I would guess the effective number of parameters reduce as the prior becomes more concentrated.
+
+
+#### 6M5
+
+Because there is always some prior knowledge, informative priors can avoid having parameters with impossible values. For example, an infinite regression coefficients. It makes it impossible for model to attain the values outside the prior distribution.
+
+
+#### 6M6
+
+If the prior is overly informative the model do not learn anything using the data. It sticks to the given prior and don't update the posterior distribution based on the data.
+
+
+
+### Hard
+
+```{r}
+library(rethinking)
+data(Howell1)
+d <- Howell1
+d$age <- (d$age - mean(d$age))/sd(d$age)
+d$h <- (d$height - mean(d$height))/sd(d$height)
+set.seed( 1000 )
+i <- sample(1:nrow(d),size=nrow(d)/2)
+d1 <- d[i , ]
+d2 <- d[-i , ]
+
+m1 = map(
+  alist(
+    h     ~ dnorm(mu, sigma),
+    mu    <- alpha + beta * age,
+    alpha ~ dnorm(0, 3),
+    beta  ~ dnorm(0, 3),
+    sigma ~ dunif(0, 4)
+  ), data = d1)
+
+m2 = map(
+  alist(
+    h     ~ dnorm(mu, sigma),
+    mu    <- alpha + beta_1 * age + beta_2 * age^2,
+    alpha ~ dnorm(0, 3),
+    beta_1  ~ dnorm(0, 3),
+    beta_2  ~ dnorm(0, 3),
+    sigma ~ dunif(0, 4)
+  ), data = d1)
+
+m3 = map(
+  alist(
+    h     ~ dnorm(mu, sigma),
+    mu    <- alpha + beta_1 * age + beta_2 * age^2 + beta_3 * age^3,
+    alpha ~ dnorm(0, 3),
+    beta_1  ~ dnorm(0, 3),
+    beta_2  ~ dnorm(0, 3),
+    beta_3  ~ dnorm(0, 3),
+    sigma ~ dunif(0, 4)
+  ), data = d1)
+
+m4 = map(
+  alist(
+    h     ~ dnorm(mu, sigma),
+    mu    <- alpha + beta_1 * age + beta_2 * age^2 + beta_3 * age^3 +
+             beta_4 * age^4,
+    alpha ~ dnorm(0, 3),
+    beta_1  ~ dnorm(0, 3),
+    beta_2  ~ dnorm(0, 3),
+    beta_3  ~ dnorm(0, 3),
+    beta_4  ~ dnorm(0, 3),
+    sigma ~ dunif(0, 4)
+  ), data = d1)
+
+m5 = map(
+  alist(
+    h     ~ dnorm(mu, sigma),
+    mu    <- alpha + beta_1 * age + beta_2 * age^2 + beta_3 * age^3 +
+             beta_4 * age^4 + beta_5 * age^5,
+    alpha  ~ dnorm(0, 3),
+    beta_1 ~ dnorm(0, 3),
+    beta_2 ~ dnorm(0, 3),
+    beta_3 ~ dnorm(0, 3),
+    beta_4 ~ dnorm(0, 3),
+    beta_5 ~ dnorm(0, 3),
+    sigma  ~ dunif(0, 4)
+  ), data = d1)
+
+m6 = map(
+  alist(
+    h     ~ dnorm(mu, sigma),
+    mu    <- alpha + beta_1 * age + beta_2 * age^2 + beta_3 * age^3 +
+             beta_4 * age^4 + beta_5 * age^5 + beta_6 * age^6,
+    alpha  ~ dnorm(0, 3),
+    beta_1 ~ dnorm(0, 3),
+    beta_2 ~ dnorm(0, 3),
+    beta_3 ~ dnorm(0, 3),
+    beta_4 ~ dnorm(0, 3),
+    beta_5 ~ dnorm(0, 3),
+    beta_6 ~ dnorm(0, 3),
+    sigma  ~ dunif(0, 4)
+  ), data = d1)
+```
+
+
+#### 6H1
+
+```{r}
+compare(m1, m2, m3, m4, m5, m6)
+```
+
+
