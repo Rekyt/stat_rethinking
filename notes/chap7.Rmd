@@ -1,0 +1,118 @@
+---
+title: "Chapter 7 – Practice"
+author: "Matthias Grenié"
+date: "19 janvier 2018"
+output: pdf_document
+---
+
+## Easy
+
+### 7E1
+
+ (1) There could be an interaction with **temperature**.
+ (2) There could be an interaction with **social background**.
+ (3) There could be an interaction with **motor presence**.
+
+### 7E2
+
+ Interactions in (2), (3) and (4)
+ 
+ 
+### 7E3
+
+(2)
+```
+car_speed ~ cylinders + fuel_injector + cylinders*fuel_injector
+```
+
+(3)
+```
+political_belifs ~ parents_presence + friends_presence + parents_presence*friends_presence
+```
+
+(4)
+```
+intelligence ~ social + appendages + social*appendages
+```
+
+
+## Medium
+
+### 7M1
+
+Under high temperature, whatever the level of water or shade, plants can't bloom at all. While under low temperature tulips blooming depend on water and shade levels.
+
+
+### 7M2
+
+```
+bloom_size ~ temperature * (alpha + shade + water + shade * water)
+```
+with temperature = 0 when temperature is hot, and 1 when it's cold
+
+
+### 7M3
+
+In the presence of wolfves the raven population size would rise.
+
+The interaction could be linear as long as there is no limit to the number of carcasses available to wolves and no limit to the number of wolves.
+However, we could imagine a threshold effect between those three variables if, at a point, for example wolves don't tolerate ravens anymore.
+
+
+
+## Hard
+
+### 7H1
+
+```{r}
+library("rethinking")
+
+data(tulips)
+
+tulips$bed_id = coerce_index(tulips$bed)
+
+tulips$shade.c = tulips$shade - mean(tulips$shade)
+tulips$water.c = tulips$water - mean(tulips$water)
+
+m_no_bed <- map(
+  alist(
+    blooms ~ dnorm(mu, sigma),
+    mu <- alpha + bW * water.c + bS * shade.c + bWS * water.c * shade.c,
+    alpha ~ dnorm(130, 100),
+    bW ~ dnorm(0, 100),
+    bS ~ dnorm(0, 100),
+    bWS ~ dnorm(0, 100),
+    sigma ~ dunif(0, 100)
+  ),
+  data = tulips,
+  start = list(alpha = mean(tulips$blooms),
+               bW = 0,
+               bS = 0,
+               bWS = 0,
+               sigma = sd(tulips$blooms))
+)
+m_bed <- map(
+  alist(
+    blooms ~ dnorm(mu, sigma),
+    mu <- a[bed_id] + bW * water.c + bS * shade.c + bWS * water.c * shade.c,
+    a[bed_id] ~ dnorm(130, 20),
+    bW ~ dnorm(0, 100),
+    bS ~ dnorm(0, 100),
+    bWS ~ dnorm(0, 100),
+    sigma ~ dunif(0, 10)
+  ),
+  data = tulips,
+  start = list(a[1] = mean(tulips$blooms),
+               a[2] = mean(tulips$blooms),
+               a[3] = mean(tulips$blooms),
+               bW = 0,
+               bS = 0,
+               bWS = 0,
+               sigma = sd(tulips$blooms))
+)
+coeftab(m_no_bed, m_bed)
+precis(m_no_bed)
+precis(m_bed)
+compare(m_no_bed, m_bed)
+```
+
