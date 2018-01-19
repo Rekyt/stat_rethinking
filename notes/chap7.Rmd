@@ -116,3 +116,112 @@ precis(m_bed)
 compare(m_no_bed, m_bed)
 ```
 
+### 7H3
+
+(a)
+
+```{r}
+data("rugged")
+
+given_nations = rugged
+
+given_nations$log_rgdp = log(given_nations$rgdppc_2000)
+given_nations = given_nations[complete.cases(given_nations$log_rgdp),]
+
+full_model = map(
+  alist(
+    log_rgdp ~ dnorm(mu, sigma),
+    mu <- a + bA * cont_africa + bR * rugged + bAR * cont_africa * rugged,
+    a     ~ dnorm(8, 100),
+    bA    ~ dnorm(0, 1),
+    bR    ~ dnorm(0, 1),
+    bAR   ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = given_nations
+)
+
+without_syc = map(
+  alist(
+    log_rgdp ~ dnorm(mu, sigma),
+    mu <- a + bA * cont_africa + bR * rugged + bAR * cont_africa * rugged,
+    a     ~ dnorm(8, 100),
+    bA    ~ dnorm(0, 1),
+    bR    ~ dnorm(0, 1),
+    bAR   ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = given_nations[given_nations$isocode != "SYC",]
+)
+
+coeftab(full_model, without_syc)
+precis(full_model)
+precis(without_syc)
+```
+
+It seems to still depend on the continent, even without Seychelles, the relation did not changed much.
+
+(b)
+
+```{r}
+# Full model
+rugged.seq = seq(from = -1, to = 8, by = 0.25)
+
+full_mu.Africa <- link(full_model, data = data.frame(cont_africa = 1,
+                                                     rugged = rugged.seq))
+full_mu.Africa.mean = apply(full_mu.Africa, 2, mean)
+full_mu.Africa.PI = apply(full_mu.Africa, 2, PI, prob = 0.97)
+
+full_mu.NotAfrica <- link(full_model, data = data.frame(cont_africa = 0,
+                                                     rugged = rugged.seq))
+full_mu.NotAfrica.mean = apply(full_mu.NotAfrica, 2, mean)
+full_mu.NotAfrica.PI = apply(full_mu.NotAfrica, 2, PI, prob = 0.97)
+
+# without SYC
+syc_mu.Africa <- link(without_syc, data = data.frame(cont_africa = 1,
+                                                     rugged = rugged.seq))
+syc_mu.Africa.mean = apply(syc_mu.Africa, 2, mean)
+syc_mu.Africa.PI = apply(syc_mu.Africa, 2, PI, prob = 0.97)
+
+syc_mu.NotAfrica <- link(without_syc, data = data.frame(cont_africa = 0,
+                                                     rugged = rugged.seq))
+syc_mu.NotAfrica.mean = apply(syc_mu.NotAfrica, 2, mean)
+syc_mu.NotAfrica.PI = apply(syc_mu.NotAfrica, 2, PI, prob = 0.97)
+
+
+## Plots
+
+par(mfrow = c(2, 2))
+
+# Full model
+# African nations
+plot(log_rgdp ~ rugged, data = given_nations[given_nations$cont_africa == 1, ],
+     col = rangi2, ylab = "log GDP 2000", xlab = "Terrain Ruggedness Index")
+mtext("African nations – Full Model", 3)
+lines(rugged.seq, full_mu.Africa.mean, col = rangi2)
+shade(full_mu.Africa.PI, rugged.seq, col = col.alpha(rangi2, 0.3))
+
+# Non-African Nations
+plot(log_rgdp ~ rugged, data = given_nations[given_nations$cont_africa == 0, ],
+     col = rangi2, ylab = "log GDP 2000", xlab = "Terrain Ruggedness Index")
+mtext("Non African nations – Full Model", 3)
+lines(rugged.seq, full_mu.NotAfrica.mean, col = rangi2)
+shade(full_mu.NotAfrica.PI, rugged.seq, col = col.alpha(rangi2, 0.3))
+
+# Without SYC
+plot(log_rgdp ~ rugged, data = given_nations[given_nations$cont_africa == 1 &
+                                               given_nations$isocode != "SYC", ],
+     col = rangi2, ylab = "log GDP 2000", xlab = "Terrain Ruggedness Index")
+mtext("African nations – Without SYC", 3)
+lines(rugged.seq, syc_mu.Africa.mean, col = rangi2)
+shade(syc_mu.Africa.PI, rugged.seq, col = col.alpha(rangi2, 0.3))
+
+# Non-African Nations
+plot(log_rgdp ~ rugged, data = given_nations[given_nations$cont_africa == 0 &
+                                               given_nations$isocode != "SYC", ],
+     col = rangi2, ylab = "log GDP 2000", xlab = "Terrain Ruggedness Index")
+mtext("Non African nations – Without SYC", 3)
+lines(rugged.seq, syc_mu.NotAfrica.mean, col = rangi2)
+shade(syc_mu.NotAfrica.PI, rugged.seq, col = col.alpha(rangi2, 0.3))
+```
+
