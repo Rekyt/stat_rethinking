@@ -196,3 +196,43 @@ m5.o <- map2stan(
 compare(m5.o, m5.1, m5.2, m5.3)
 ```
 Indeed, the model with the interaction term has more weight than the model without. So the divorce rate is mostly an effect of the Marriage Rate, the interaction between Marriage Rate and Median Age of Marriage.
+
+
+### 8H3
+
+```{r}
+N <- 100
+height <- rnorm(N, 10, 2)
+leg_prop <- runif(N, 0.4, 0.5)
+leg_left <- leg_prop * height + rnorm(N , 3 , 0.02)
+leg_right <- leg_prop * height + rnorm(N , 3 , 0.02)
+legs <- data.frame(height, leg_left, leg_right)
+
+m5.8s <- map2stan(
+  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + bl * leg_left + br * leg_right,
+    a ~ dnorm(10, 100),
+    bl ~ dnorm(2, 10),
+    br ~ dnorm(2, 10),
+    sigma ~ dcauchy(0, 1)
+  ), data = legs, chains = 4,
+  start = list(a = 10, bl = 0, br = 0, sigma = 1)
+)
+
+m5.8s2 <- map2stan(
+  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + bl * leg_left + br * leg_right,
+    a ~ dnorm(10, 100),
+    bl ~ dnorm(2, 10),
+    br ~ dnorm(2, 10) & T[0, ],
+    sigma ~ dcauchy(0, 1)
+  ), data = legs, chains = 4,
+  start = list(a = 10, bl = 0, br = 0, sigma = 1)
+)
+
+precis(m5.8s)
+precis(m5.8s2)
+```
+When truncating the prior distribution, now the two parameters are mostly positive. When they were of opposite site without truncating.
