@@ -127,3 +127,72 @@ mp <- map2stan(
 )
 ```
 
+The Cauchy distribution is narrower?
+
+
+### 8H2
+
+```{r}
+# Load Data
+data("WaffleDivorce")
+
+wd <- WaffleDivorce
+
+# Scale variables
+wd$MedianAgeMarriage.s <- (wd$MedianAgeMarriage - mean(wd$MedianAgeMarriage))/
+    sd(wd$MedianAgeMarriage)
+
+wd$Marriage.s <- (wd$Marriage - mean(wd$Marriage))/sd(wd$Marriage)
+
+# Fit models
+m5.1 <- map2stan(
+  alist(
+    Divorce ~ dnorm(mu , sigma),
+    mu <- a + bA * MedianAgeMarriage.s,
+    a     ~ dnorm(10, 10),
+    bA    ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ), data = wd
+)
+m5.2 <- map2stan(
+  alist(
+    Divorce ~ dnorm(mu, sigma),
+    mu <- a + bR * Marriage.s,
+    a     ~ dnorm(10, 10),
+    bR    ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = wd
+)
+
+m5.3 <- map2stan(
+  alist(
+    Divorce ~ dnorm(mu , sigma),
+    mu <- a + bR*Marriage.s + bA*MedianAgeMarriage.s,
+    a ~ dnorm(10, 10),
+    bR ~ dnorm(0, 1),
+    bA ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = wd)
+
+compare(m5.1, m5.2, m5.3)
+```
+Divorce is mainly explained by Median Marriage Age, than by Marriage Rate alone. There may be a slight interaction between Median Marriage Age and Marriage Rate. People mary more when the Median Marriage Age is lower for example.
+
+```{r}
+m5.o <- map2stan(
+  alist(
+    Divorce ~ dnorm(mu , sigma),
+    mu <- a + bR*Marriage.s + bA*MedianAgeMarriage.s + bAR*Marriage.s*MedianAgeMarriage.s,
+    a     ~ dnorm(10, 10),
+    bR    ~ dnorm(0, 1),
+    bA    ~ dnorm(0, 1),
+    bAR   ~ dnorm(0, 1),
+    sigma ~ dunif(0, 10)
+  ),
+  data = wd)
+
+compare(m5.o, m5.1, m5.2, m5.3)
+```
+Indeed, the model with the interaction term has more weight than the model without. So the divorce rate is mostly an effect of the Marriage Rate, the interaction between Marriage Rate and Median Age of Marriage.
