@@ -145,8 +145,30 @@ m10.14 = map2stan(
   ), data = d
 )
 
-compare(m10.10, m10.11, m10.12, m10.13, m10.14, n=1e4)
+islands_comp = compare(m10.10, m10.11, m10.12, m10.13, m10.14, n = 1e4)
+plot(islands_comp)
 ```
 
 
 ## Exercises
+
+### Easy
+
+#### 10E1
+
+An event with probability of 0.35 has a log-odd of `r logit(0.35)`
+
+
+#### 10E2
+
+An event with log-odss of 3.2 has a probability of `r logistic(3.2)`
+
+
+#### 10E3
+
+Thus the proportional odds is `r exp(1.7)`, multiplied by more than 5.5!
+
+#### 10E4
+
+The Poisson regressions sometimes need offset when it's used to model rates.
+
