@@ -8,7 +8,7 @@ output: pdf_document
 ## Notes
 
 ```{r}
-library("rethiking")
+library("rethinking")
 data("chimpanzees")
 d = chimpanzees
 ```
@@ -45,6 +45,107 @@ m10.3 = map2stan(
 )
 
 compare(m10.1, m10.2, m10.3)
+```
+
+See if posterior distribution is multivariate gaussian:
+```{r}
+pairs(m10.3)
+```
+
+```{r, fig.height=8, fig.width=8}
+m10.4 = map2stan(
+  alist(
+    pulled_left ~ dbinom(1, p),
+    logit(p) <- a[actor] + (bp + bpC*condition)*prosoc_left,
+    a[actor] ~ dnorm(0, 10),
+    bp ~ dnorm(0, 10),
+    bpC ~ dnorm(0, 10)
+  ),
+  data = d, chains = 2, iter = 2500, warmup = 500
+)
+
+pairs(m10.4)
+```
+
+Number of times a chimpazee did a pull
+
+```{r}
+d.aggregated = aggregate(d$pulled_left,
+                         list(prosoc_left = d$prosoc_left,
+                              condition = d$condition,
+                              actor = d$actor),
+                         sum)
+
+m10.5 = map2stan(
+  alist(
+    x ~ dbinom(18, p),
+    logit(p) <- a + (bp + bpC*condition)*prosoc_left,
+    a ~ dnorm(0, 10),
+    bp ~ dnorm(0, 10),
+    bpC ~ dnorm(0, 10)),
+  data = d.aggregated
+)
+```
+
+
+
+```{r}
+data(Kline)
+
+head(Kline)
+
+d = Kline
+d$log_pop = log(d$population)
+d$contact_high = ifelse(d$contact == "high", 1, 0)
+
+m10.10 = map2stan(
+  alist(
+    total_tools ~ dpois(lambda),
+    log(lambda) <- a + bp*log_pop + bc*contact_high + bpc*contact_high*log_pop,
+    a ~  dnorm(0, 100),
+    bp ~ dnorm(0, 1),
+    bc ~ dnorm(0, 1),
+    bpc ~ dnorm(0, 1)
+  ), data = d
+)
+
+m10.11 = map2stan(
+  alist(
+    total_tools ~ dpois(lambda),
+    log(lambda) <- a + bp*log_pop + bc*contact_high,
+    a ~  dnorm(0, 100),
+    bp ~ dnorm(0, 1),
+    bc ~ dnorm(0, 1)
+  ), data = d
+)
+
+m10.12 = map2stan(
+  alist(
+    total_tools ~ dpois(lambda),
+    log(lambda) <- a + bp*log_pop,
+    a ~  dnorm(0, 100),
+    bp ~ dnorm(0, 1)
+  ), data = d
+)
+
+m10.13 = map2stan(
+  alist(
+    total_tools ~ dpois(lambda),
+    log(lambda) <- a + bc*contact_high,
+    a ~  dnorm(0, 100),
+    bc ~ dnorm(0, 1)
+  ), data = d
+)
+
+m10.14 = map2stan(
+  alist(
+    total_tools ~ dpois(lambda),
+    log(lambda) <- a,
+    a ~  dnorm(0, 100)
+  ), data = d
+)
+
+compare(m10.10, m10.11, m10.12, m10.13, m10.14, n=1e4)
 ```
 
 
