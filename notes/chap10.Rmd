@@ -241,6 +241,49 @@ The maximum a posteriori approximation has problem to estimate the skewed value 
 Compared to the MCMC. A part from this difference the posterior distributions look the same and the MAP estimates all the other parameters similarly to MCMC (single normal peak).
 
 
+### 10H2
+
+```{r}
+compare(m10.1, m10.2, m10.3, m10.4)
+```
+
+Model `m10.4` (with the unique intercept for each actor) has the lowest WAIC and all the weight, so it seems better than all the others. Even though it has more parameters.
 
 
+### 10H3
 
+```{r}
+data("eagles", package = "MASS")
+df = eagles
+df$P = ifelse(df$P == "L", 1, 0)
+df$V = ifelse(df$V == "L", 1, 0)
+df$A = ifelse(df$A == "A", 1, 0)
+# a
+
+m10h3_map = map(
+  alist(
+    y  ~ dbinom(n, p),
+    logit(p) <- a + bp*P + bV*V + bA*A,
+    a  ~ dnorm(0, 10),
+    bp ~ dnorm(0, 5),
+    bV ~ dnorm(0, 5),
+    bA ~ dnorm(0, 5)
+  ), data = df
+)
+
+m10h3_stan = map2stan(
+  alist(
+    y  ~ dbinom(n, p),
+    logit(p) <- a + bp*P + bV*V + bA*A,
+    a  ~ dnorm(0, 10),
+    bp ~ dnorm(0, 5),
+    bV ~ dnorm(0, 5),
+    bA ~ dnorm(0, 5)
+  ), data = df, chains = 2, iter = 3000
+)
+
+pairs(m10h3_map)
+pairs(m10h3_stan)
+```
+
+It seems the MAP is not appropriate here as most of the predictors exhibit a skewed distribution.
