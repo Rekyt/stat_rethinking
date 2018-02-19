@@ -172,3 +172,75 @@ Thus the proportional odds is `r exp(1.7)`, multiplied by more than 5.5!
 
 The Poisson regressions sometimes need offset when it's used to model rates.
 
+
+### Medium
+
+#### 10M1
+
+Couldn't state it but see https://stats.stackexchange.com/a/144174.
+
+
+#### 10M2
+
+A change in a single unit of the predictor changes the outcome by a factor `r exp(1.7)`.
+
+
+#### 10M3
+
+The logit link is appropriate because it restricts the outcome in the range between 0 and 1.
+
+
+#### 10M4
+
+Similarly as above the log link for a Poisson GLM is appropriate as it restricts the outcome to be positive.
+
+
+#### 10M5
+
+Using a logit link for the mean of the GLM would mean that this mean should be restricted between zero and one. For example when studying a very rare event that can occur a maximum of a single time at the point.
+For example we could study the average time that a certain electric powerplant experiences a problem over a given period of time.
+
+
+#### 10M6
+
+Not sure how to proceed, look back.
+
+
+### Hard
+
+#### 10H1
+
+```{r}
+data("chimpanzees")
+
+m10.4_stan = map2stan(
+  alist(
+    pulled_left ~ dbinom(1, p),
+    logit(p) <- a[actor] + (bp + bpC*condition)*prosoc_left,
+    a[actor] ~ dnorm(0, 10),
+    bp       ~ dnorm(0, 10),
+    bpC      ~ dnorm(0, 10)
+  ), data = chimpanzees, chains = 2, iter = 2500, warmup = 500
+)
+
+m10.4_map = map(
+  alist(
+    pulled_left ~ dbinom(1, p),
+    logit(p) <- a[actor] + (bp + bpC*condition)*prosoc_left,
+    a[actor] ~ dnorm(0, 10),
+    bp       ~ dnorm(0, 10),
+    bpC      ~ dnorm(0, 10)
+  ), data = chimpanzees
+)
+
+pairs(m10.4_stan)
+pairs(m10.4_map)
+```
+
+The maximum a posteriori approximation has problem to estimate the skewed value of individual a.2.
+Compared to the MCMC. A part from this difference the posterior distributions look the same and the MAP estimates all the other parameters similarly to MCMC (single normal peak).
+
+
+
+
+
