@@ -7,7 +7,7 @@ output: pdf_document
 
 ## Notes
 
-```{r}
+```{r setup}
 library("rethinking")
 data("chimpanzees")
 d = chimpanzees
@@ -287,3 +287,36 @@ pairs(m10h3_stan)
 ```
 
 It seems the MAP is not appropriate here as most of the predictors exhibit a skewed distribution.
+
+```{r}
+plot(precis(m10h3_stan))
+precis(m10h3_stan)
+```
+
+So V indicates if the victim has a large body size and the coefficient is $bV$ is $-5.06$ which gives `r exp(-5.06)` proportional odds of a large vulture being pirated compared to a small one.
+Then $bp$ is $4.64$ which gives `r exp(4.64)` percent chances more for an attack to succeed if the pirate is large.
+Simarlly $bA$ is $1.13$ which gives `r exp(1.13)/100` more chances for the attack to succeed if pirate is mature.
+
+```{r}
+post = extract.samples(m10h3_stan)
+eagle_pred = ensemble(m10h3_stan, data = df[, c(3:5)])
+eagle_pred_mean = apply(eagle_pred$link, 2, mean)
+eagle_pred_PI = apply(eagle_pred$link, 2, PI)
+y.mean = apply(eagle_pred$sim, 2, mean)
+y.PI = apply(eagle_pred$sim, 2, PI)
+
+plot(1:8, df$y/df$n, col = rangi2, xaxt="n", xlim=c(0.75,8.25) , ylim = c(0, 1),
+     pch = 16, xlab = "Case", ylab = "Probability of pirating")
+axis(1, at = 1:8, labels = c( "LAL","LAS","LIL","LIS","SAL","SAS","SIL","SIS" ))
+points(1:8, eagle_pred_mean, pch = 3)
+for (i in 1:8) {
+  lines(c(i, i), eagle_pred_PI[, i])
+}
+
+plot(df$y, col = rangi2, ylab = "number of Successes", xlab = "case",
+     xaxt = "n", xlim = c(0.75,8.25) , ylim = c(0, 30), pch = 16)
+axis(1, at = 1:8, labels = c( "LAL","LAS","LIL","LIS","SAL","SAS","SIL","SIS" ))
+points( 1:8 , y.mean )
+for (i in 1:8) lines(c(i, i), y.PI[,i])
+```
+
